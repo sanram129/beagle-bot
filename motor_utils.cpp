@@ -1,7 +1,5 @@
 #include "motor_utils.h"
 
-#include <iostream>
-
 uint32_t *get_pru1_array() {
     
     // Pointer to memory
@@ -12,7 +10,7 @@ uint32_t *get_pru1_array() {
 
     // Return a null pointer if there is an error
     if (mem_file == -1) {
-        std::cout << "/dev/mem not opened!";
+        std::cout << "/dev/mem not opened!" << std::endl;
         return nullptr;
     }
 
@@ -21,7 +19,7 @@ uint32_t *get_pru1_array() {
 
     // Return a nullptr if error occurs in mapping
     if (pru_mem == MAP_FAILED) {
-        std::cout << "pru memory not mapped!";
+        std::cout << "pru memory not mapped!" << std::endl;
         return nullptr;
     }
 
@@ -44,7 +42,7 @@ float *get_motor_angles(uint32_t *pru1_mem) {
 
     // Check for a malloc fail
     if (angles == nullptr) {
-        std::cout << "angles array not allocated!";
+        std::cout << "angles array not allocated!" << std::endl;
         return angles;
     }
 
@@ -64,6 +62,6 @@ void update_pru_vals(uint32_t *pru1_mem, float *cycles) {
 
 void close_pru1_mem(uint32_t *pru1_mem) {
     if (munmap(pru1_mem, PRU_MEM_LEN)) {
-        std::cout << "memory unmap failed!";
+        std::cout << "memory unmap failed!" << std::endl;;
     }
 }

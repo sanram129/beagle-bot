@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include <iostream>
 #include <stdint.h>
 #include <fcntl.h>
 #include <sys/mman.h>
