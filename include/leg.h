@@ -10,9 +10,9 @@
 #define LEG_LINK_3_LEN 80.0
 
 enum leg_locations {
-    FRONT_LEFT,
-    FRONT_RIGHT,
+    FRONT_LEFT = 0,
     BACK_LEFT,
+    FRONT_RIGHT,
     BACK_RIGHT
 };
 

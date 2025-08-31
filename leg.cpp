@@ -18,6 +18,10 @@ Leg::Leg(int8_t leg_loc) {
 
 float *Leg::ik_to_motor(float *ik_angles) {
     float *new_motor_angles = (float*) malloc(3*sizeof(float));
+
+    // TODO
+
+    return new_motor_angles;
 }
 
 void Leg::set_ee(float *position) {

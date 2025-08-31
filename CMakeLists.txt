@@ -4,7 +4,8 @@ project(beagle-bot VERSION 0.1.0 LANGUAGES C CXX)
 add_executable(beagle-bot 
                 main.cpp 
                 motor_utils.cpp 
-                leg.cpp)
+                leg.cpp
+                beagle_robot.cpp)
 target_include_directories(beagle-bot PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 include(CTest)
