@@ -4,8 +4,8 @@ Robot::Robot() {
     // The offsets required to align all axes
     int offsets[4][3] = {
         {1, 1, -1},
-        {-1, 1, -1},
         {-1, -1, 1},
+	{-1, 1, -1},
         {1, -1, 1}
     };
 

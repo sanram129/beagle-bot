@@ -29,7 +29,7 @@ float *Leg::ik_to_motor(float *ik_angles) {
     // Take away offsets and multiply by the remainder
     for (int i = 0; i < 3; i++) {
         new_motor_angles[i] = this->ik_angles[i];
-        new_motor_angles[i] -= rad_offsets[i];
+        new_motor_angles[i] += rad_offsets[i];
         new_motor_angles[i] *= this->pos_offsets[i]; 
     }
 
@@ -38,9 +38,9 @@ float *Leg::ik_to_motor(float *ik_angles) {
 
 void Leg::set_ee(float *position) {
     // Clamp all the ee values
-    position[0] = std::max((float)-160.0, std::min(position[0], (float)160.0));
-    position[1] = std::max((float)-160.0, std::min(position[1], (float)160.0));
-    position[2] = std::max((float)-50.0, std::min(position[0], (float)-160.0));
+    //position[0] = std::max((float)-160.0, std::min(position[0], (float)160.0));
+    //position[1] = std::max((float)-160.0, std::min(position[1], (float)160.0));
+    //position[2] = std::max((float)-50.0, std::min(position[0], (float)-160.0));
 
     float tmp_angles[3] = {0.0};
 
@@ -67,6 +67,11 @@ void Leg::set_ee(float *position) {
                         / (2.0*LEG_LINK_2_LEN*LEG_LINK_3_LEN));
 
     tmp_angles[1] = M_PI/4.0 + asin(LEG_LINK_3_LEN*sin(tmp_angles[2])/j2_ee) + acos(j2_ee_z/j2_ee);
+
+    // Handle a positive end effector x position
+    if (position[0] > 0.0) {
+	tmp_angles[1] = M_PI - tmp_angles[1];
+    }
 
     if (tmp_angles[1] > M_PI || tmp_angles[1] < 0) {
         std::cout << "Invalid end effector position!" << std::endl;

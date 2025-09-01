@@ -18,8 +18,8 @@ float *current_target_position = new float[12];
 
 // Send the final cycles to the PRU
 void send_to_pru(float *motor_angles) {
-    std::cout << "Target positions are: " << current_target_position[6]
-	<< " " << current_target_position[7] << " " << current_target_position[8] << std::endl;
+    //std::cout << "Target positions are: " << current_target_position[3]
+	//<< " " << current_target_position[4] << " " << current_target_position[5] << std::endl;
     // Send the cycle amounts to the PRU
     for (int i = 0; i < 12; i++) {
         pru_mem[i] = degrees_to_cycles(motor_angles[i]);
@@ -49,7 +49,7 @@ int main(int, char**){
     struct js_event ev;
 
     // Test leg initialization
-    int pos_offsets[] = {-1, -1, 1};
+    int pos_offsets[] = {1, 1, -1};
     test_leg = new Leg(pos_offsets);
 
     // Main loop is ready for input
@@ -140,17 +140,19 @@ int main(int, char**){
 	    // }
 
         
-        float pos[3] = {0.0, 16.5, -(float)80*sqrt(2)};
+        float pos[3] = {0, 16.5, -80*sqrt(2)};
 
         test_leg->set_ee(pos);
 
         //Get the new motor angles
         float *new_motor = test_leg->get_motor_angles();
 
+	std::cout << "new_motor: " << new_motor[0] << " " << new_motor[1] << " " << new_motor[2] << std::endl;
+
         // Test front right leg
-        current_target_position[3] = new_motor[0]*180/M_PI;
-        current_target_position[4] = new_motor[1]*180/M_PI;
-        current_target_position[5] = new_motor[2]*180/M_PI;
+        current_target_position[0] = new_motor[0]*180/M_PI;
+        current_target_position[1] = new_motor[1]*180/M_PI;
+        current_target_position[2] = new_motor[2]*180/M_PI;
 
         // Push the new array to the PRU
         send_to_pru(current_target_position);

@@ -5,8 +5,8 @@
 
 enum leg_pos {
     FRONT_LEFT = 0,
-    BACK_LEFT,
     FRONT_RIGHT,
+    BACK_LEFT,
     BACK_RIGHT
 };
 
