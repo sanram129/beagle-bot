@@ -5,9 +5,9 @@
 #include <vector>
 
 #include "motor_utils.h"
-#include "beagle_robot.h"
+#include "leg.h"
 
-// TODO:
+// TODO: test a single leg with IK
 
 // Create variables
 uint32_t *pru_mem;
@@ -18,6 +18,7 @@ std::vector<float *> goal_deg_queue;
 // Send the final cycles to the PRU
 void send_to_pru(std::vector<float *> motor_angles) {
     // Do nothing if there are no packages to send
+    // The PRU will hold the current position
     if (motor_angles.size() == 0)
 	return;
 
@@ -25,9 +26,8 @@ void send_to_pru(std::vector<float *> motor_angles) {
         pru_mem[i] = degrees_to_cycles(motor_angles[0][i]);
     }
 
-    // Remove the first if there is more than one to process
-    if (motor_angles.size() > 1)
-        goal_deg_queue.erase(goal_deg_queue.begin());
+    // Remove the first cycle message
+    goal_deg_queue.erase(goal_deg_queue.begin());
 }
 
 int main(int, char**){
@@ -45,7 +45,7 @@ int main(int, char**){
     }
 
     // Handle motor angle updates in the background while the main thread makes calculations
-    //std::thread pru_sender(send_to_pru, goal_deg_queue);
+    std::thread pru_sender(send_to_pru, goal_deg_queue);
 
     // Event handler for joystick
     struct js_event ev;
@@ -73,6 +73,14 @@ int main(int, char**){
 		Down = 32767
 		Up = -32767
 
+	    Axis 4 = Right trigger
+		Down = 32767
+		Up (Not pressed) = -32767
+
+	    Axis 5 = Left trigger
+		Down = 32767
+		Up (Not pressed) = -32767
+
 	    BUTTONS
 
 	    Button 6 = Left bumper
@@ -80,27 +88,32 @@ int main(int, char**){
 	*/
 
         // Read the input from joy
-        read(joy, &ev, sizeof(ev));
-        switch((int)ev.type) {
-            case JS_EVENT_BUTTON:
-		std::cout << "Button pressed!" << std::endl;
-                std::cout << "Button event number: " << (int)ev.number << std::endl;
-                std::cout << "Button event value: " << (int)ev.value << std::endl;
-                break;
-            case JS_EVENT_AXIS:
-		if ((int)ev.number == 3)
-			std::cout << (int)ev.value << std::endl;
-                break;
-            default:
-                break;
-        }
+        try {
+	    read(joy, &ev, sizeof(ev));
+            switch((int)ev.type) {
+                case JS_EVENT_BUTTON:
+	            std::cout << "Button pressed!" << std::endl;
+                    std::cout << "Button event number: " << (int)ev.number << std::endl;
+                    std::cout << "Button event value: " << (int)ev.value << std::endl;
+                    break;
+                case JS_EVENT_AXIS:
+		    if ((int)ev.number == 5)
+			    std::cout << (int)ev.value << std::endl;
+                    break;
+                default:
+                    break;
+            }
+        } catch (int e) {
+		std::cout << "Error occurred: " << e << std::endl;
+		break;
+	}
     }
 
     // Close the PRU's memory
     close_pru1_mem(pru_mem);
 
     // Join the thread
-    //pru_sender.join();
+    pru_sender.join();
 
     return 0;
 }
