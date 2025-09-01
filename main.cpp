@@ -43,16 +43,32 @@ int main(int, char**){
     // Handle motor angle updates in the background while the main thread makes calculations
     std::thread pru_sender(send_to_pru, goal_deg_queue);
 
+    // Event handler for joystick
+    struct js_event ev;
+
     // Main loop for input and inverse kinematics/walk
     while (1) {
-
+        // Read the input from joy
+        read(joy, &ev, sizeof(ev));
+        switch(ev.type) {
+            case JS_EVENT_BUTTON:
+                std::cout << "Button event number: " << ev.number << std::endl;
+                std::cout << "Button event value: " << ev.value << std::endl;
+                break;
+            case JS_EVENT_AXIS:
+                std::cout << "Axis event number: " << ev.number << std::endl;
+                std::cout << "Axis event value: " << ev.value << std::endl;
+                break;
+            default:
+                break;
+        }
     }
 
     // Close the PRU's memory
     close_pru1_mem(pru_mem);
 
-    // Terminate all threads
-    std::terminate();
+    // Join the thread
+    pru_sender.join();
 
     return 0;
 }

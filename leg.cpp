@@ -54,12 +54,12 @@ void Leg::set_ee(float *position) {
 
     tmp_angles[1] = M_PI/2 + asin(LEG_LINK_3_LEN*sin(tmp_angles[2])/j2_ee) + acos(j2_ee_z/j2_ee);
 
-    if (tmp_angles[1] > M_PI || tmp_angles[0] < M_PI/4) {
+    if (tmp_angles[1] > M_PI || tmp_angles[1] < M_PI/4) {
         std::cout << "Invalid end effector position!" << std::endl;
         return;
     }
 
-    if (tmp_angles[2] > M_PI || tmp_angles[0] < 0) {
+    if (tmp_angles[2] > M_PI || tmp_angles[2] < 0) {
         std::cout << "Invalid end effector position!" << std::endl;
         return;
     }
