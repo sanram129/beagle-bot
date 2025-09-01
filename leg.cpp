@@ -1,25 +1,37 @@
 #include "leg.h"
 
 // Constructor
-Leg::Leg(int8_t leg_loc) {
+Leg::Leg(int* pos_offsets) {
     // Set IK angles
     this->ik_angles[0] = 0.0;
     this->ik_angles[1] = 3*M_PI/4;
     this->ik_angles[2] = M_PI/2;
 
-    // Set default motor angles to 0;
-    this->motor_angles[0] = 0.0;
-    this->motor_angles[1] = 0.0;
-    this->motor_angles[2] = 0.0;
+    // Set default motor angles to 0
+    // Also sets the positive axis offsets of the current leg
+    for (int i = 0; i < 3; i++) {
+        this->motor_angles[i] = 0.0;
+        this->pos_offsets[i] = pos_offsets[i];
+    }
 
-    // Set which leg this actually is
-    this->leg_loc = leg_loc;
+    // Set end effector to its home position
+    this->end_effector[0] = 0.0;
+    this->end_effector[1] = 16.5;
+    this->end_effector[2] = sqrt(2)*80.0;
 }
 
 float *Leg::ik_to_motor(float *ik_angles) {
-    float *new_motor_angles = (float*) malloc(3*sizeof(float));
+    float* new_motor_angles = (float*) malloc(sizeof(float)*3);
 
-    // TODO
+    // The list of radian offsets of each of the motors
+    float rad_offsets[] = {0.0, -M_PI/2, -M_PI/2};
+
+    // Take away offsets and multiply by the remainder
+    for (int i = 0; i < 3; i++) {
+        new_motor_angles[i] = ik_angles[i];
+        new_motor_angles[i] -= rad_offsets[i];
+        new_motor_angles[i] *= pos_offsets[i]; 
+    }
 
     return new_motor_angles;
 }
@@ -52,9 +64,9 @@ void Leg::set_ee(float *position) {
     tmp_angles[2] = acos((pow(LEG_LINK_2_LEN, 2) + pow(LEG_LINK_3_LEN, 2) - pow(j2_ee, 2))
                         / 2*LEG_LINK_2_LEN*LEG_LINK_3_LEN);
 
-    tmp_angles[1] = M_PI/2 + asin(LEG_LINK_3_LEN*sin(tmp_angles[2])/j2_ee) + acos(j2_ee_z/j2_ee);
+    tmp_angles[1] = M_PI/4 + asin(LEG_LINK_3_LEN*sin(tmp_angles[2])/j2_ee) + acos(j2_ee_z/j2_ee);
 
-    if (tmp_angles[1] > M_PI || tmp_angles[1] < M_PI/4) {
+    if (tmp_angles[1] > M_PI || tmp_angles[1] < 0) {
         std::cout << "Invalid end effector position!" << std::endl;
         return;
     }
@@ -76,8 +88,41 @@ void Leg::set_ee(float *position) {
     free(new_motor_angles);
 }
 
-float *Leg::get_ee() { return this->end_effector; }
+float *Leg::get_ee() { 
+    float* tmp_ee = (float*) malloc(sizeof(float)*3);
 
-float *Leg::get_ik_angles() { return this->ik_angles; }
+    for (int i = 0; i < 3; i++) {
+        tmp_ee[i] = this->end_effector[i];
+    }
 
-float *Leg::get_motor_angles() { return this->motor_angles; }
+    return tmp_ee; 
+}
+
+float *Leg::get_ik_angles() {
+    float* tmp_ika = (float*) malloc(sizeof(float)*3);
+
+    for (int i = 0; i < 3; i++) {
+        tmp_ika[i] = this->ik_angles[i];
+    }
+
+    return tmp_ika;
+}
+
+float *Leg::get_motor_angles() {
+    float* tmp_ma = (float*) malloc(sizeof(float)*3);
+
+    for (int i = 0; i < 3; i++) {
+        tmp_ma[i] = this->motor_angles[i];
+    }
+
+    return tmp_ma;
+}
+
+void Leg::leg_test(int axis, float delta) {
+    // Copy the current end effector position
+    float new_pos[3] = {this->end_effector[0], this->end_effector[1], this->end_effector[2]};
+
+    // Update based on desired axis
+    new_pos[axis] += delta;
+    this->set_ee(new_pos);
+}

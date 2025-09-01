@@ -16,9 +16,15 @@ enum leg_locations {
     BACK_RIGHT
 };
 
+enum axes {
+    X_AXIS = 0,
+    Y_AXIS,
+    Z_AXIS
+};
+
 class Leg {
     public:
-        Leg(int8_t leg_loc);
+        Leg(int *pos_offsets); 
 
         // Convert between IK and motor angles
         float *ik_to_motor(float *ik_angles);
@@ -33,9 +39,12 @@ class Leg {
         // Getter for motor
         float *get_motor_angles();
 
+        // Move the leg along an axis
+        float *leg_test(int axis, float delta);
+
     private:
         float ik_angles[3];
         float motor_angles[3];
         float end_effector[3];
-        int8_t leg_loc;
+        int pos_offsets[3];
 };

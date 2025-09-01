@@ -3,11 +3,13 @@
 #include <linux/joystick.h>
 #include <thread>
 #include <vector>
+#include <cstdlib>
 
 #include "motor_utils.h"
 #include "leg.h"
 
 // TODO: test a single leg with IK
+Leg *test_leg;
 
 // Create variables
 uint32_t *pru_mem;
@@ -50,6 +52,10 @@ int main(int, char**){
     // Event handler for joystick
     struct js_event ev;
 
+    // Test leg initialization
+    int pos_offsets[] = {-1, -1, 1};
+    test_leg = new Leg(pos_offsets);
+
     // Main loop for input and inverse kinematics/walk
     while (1) {
 	/*
@@ -89,24 +95,52 @@ int main(int, char**){
 
         // Read the input from joy
         try {
-	    read(joy, &ev, sizeof(ev));
+            // Store the potential new end effector position
+            float delta = 0.0;
+
+            int leg_axis = -1;
+
+	        read(joy, &ev, sizeof(ev));
             switch((int)ev.type) {
                 case JS_EVENT_BUTTON:
-	            std::cout << "Button pressed!" << std::endl;
-                    std::cout << "Button event number: " << (int)ev.number << std::endl;
-                    std::cout << "Button event value: " << (int)ev.value << std::endl;
                     break;
                 case JS_EVENT_AXIS:
-		    if ((int)ev.number == 5)
-			    std::cout << (int)ev.value << std::endl;
+                    if ((int)ev.number == 1) // x
+                        delta = (int)ev.value * 10.0 / 32767.0;
+                        leg_axis = 0;
+                    else if ((int)ev.number == 0) // y
+                        delta = (int)ev.value * 10.0 / 32767.0;
+                        leg_axis = 1;
+                    else if ((int)ev.number == 3) // z
+                        delta = (int)ev.value * 10.0 / 32767.0;
+                        leg_axis = 2;
                     break;
                 default:
                     break;
             }
+
+            if (leg_axis != -1) {
+                // Do IK on the new leg
+                test_leg->leg_test(leg_axis, new_ee_pos);
+
+                // Get the new motor angles
+                float *new_motor = test_leg->get_motor_angles()
+
+                // Test front right leg
+                float new_msg[12] = [0.0, 0.0, 0.0, 
+                                    0.0, 0.0, 0.0, 
+                                    new_motor[0], new_motor[1], new_motor[2], 
+                                    0.0, 0.0, 0.0];
+
+                goal_deg_queue.push_back(new_msg);
+
+                free(new_motor);
+            }
+
         } catch (int e) {
-		std::cout << "Error occurred: " << e << std::endl;
-		break;
-	}
+            std::cout << "Error occurred: " << e << std::endl;
+            break;
+	    }
     }
 
     // Close the PRU's memory
