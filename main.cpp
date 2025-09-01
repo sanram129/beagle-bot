@@ -5,10 +5,7 @@
 #include <cmath>
 
 #include "motor_utils.h"
-#include "leg.h"
-
-// TODO: test a single leg with IK
-Leg *test_leg;
+#include "beagle_robot.h"
 
 // Stores the pru array of cycles
 uint32_t *pru_mem;
@@ -27,6 +24,9 @@ void send_to_pru(float *motor_angles) {
 }
 
 int main(int, char**){
+    // Initialize the robot object
+    Robot beagle_bot();
+
     // Initialize target positions
     for (int i = 0; i < 12; i++) {
         current_target_position[i] = 0.0;
@@ -48,9 +48,12 @@ int main(int, char**){
     // Event handler for joystick
     struct js_event ev;
 
-    // Test leg initialization
-    int pos_offsets[] = {1, 1, -1};
-    test_leg = new Leg(pos_offsets);
+    // Initialize arrays for holding the most recent useful controller input
+    int axes[][] = {
+        {0, 0},     // Left joystick, left-right and up-down
+        (0, 0),     // Right joystick, left-right and up-down
+        {0, 0}      // Triggers, left and right
+    };
 
     // Main loop is ready for input
     std::cout << "Init complete." << std::endl;
@@ -92,67 +95,53 @@ int main(int, char**){
 	    Button 7 = Right bumper
 	*/
 
-        // // Read the input from joy
-        // try {
-        //     // Store the potential new end effector position
-        //     float delta = 0.0;
+        // Read the input from joy
+        try {
+            // Store the potential new robot position
+            float height_delta = 0.0;
 
-        //     int leg_axis = -1;
+	        read(joy, &ev, sizeof(ev));
+            switch((int)ev.type) {
+                case JS_EVENT_BUTTON:
+                    break;
+                case JS_EVENT_AXIS:
+                    switch ((int)ev.number) {
+                        case 0:
+                        case 1:
+                        case 2:
+                        case 3:
+                            // Switch all axes so up and left is positive
+                            axes[(int)ev.number/2][(int)ev.number % 2] = (int)ev.value;
+                            break;
+                        case 4:
+                        case 5:
+                            axes[2][(int)ev.number % 2] = ((int)ev.value + 32767) / 2;
+                            break;
+                    }
+                    break;
+                default:
+                    break;
+            }
 
-	    // read(joy, &ev, sizeof(ev));
-        //     switch((int)ev.type) {
-        //         case JS_EVENT_BUTTON:
-        //             break;
-        //         case JS_EVENT_AXIS:
-        //             if ((int)ev.number == 1) { // x
-        //                 delta = (int)ev.value * 2.0 / 32767.0;
-        //                 leg_axis = 0;
-        //             } else if ((int)ev.number == 0) {// y
-        //                 delta = (int)ev.value * 2.0 / 32767.0;
-        //                 leg_axis = 1;
-        //             } else if ((int)ev.number == 3) { // z
-        //                 delta = (int)ev.value * 2.0 / 32767.0;
-        //                 leg_axis = 2;
-		//     }
-        //             break;
-        //         default:
-        //             break;
-        //     }
+            // Change height and crouch first
+            // Right trigger goes up, left goes down
+            if (axes[2][0] != 0 || axes[2][1] != 0) {
+                height_delta = (axes[2][1] - axes[2][0])/32767.0;
+                beagle_bot.crouch(height_delta);
+            } else {
+                // Walk if we don't want to crouch
+            }
 
-        //     if (leg_axis != -1) {
-        //         // Do IK on the new leg
-        //         test_leg->leg_test(leg_axis, delta);
+            // Update target
+            float *temp_target = beagle_bot.get_goal_angles();
+            for (int i = 0; i < 12; i++) {
+                current_target_position[i] = temp_target[i];
+            }
 
-        //         // Get the new motor angles
-        //         float *new_motor = test_leg->get_motor_angles();
-
-        //         // Test front right leg
-        //         current_target_position[6] = new_motor[0]*180/M_PI;
-        //         current_target_position[7] = new_motor[1]*180/M_PI;
-        //         current_target_position[8] = new_motor[2]*180/M_PI;
-
-        //         free(new_motor);
-        //     }
-
-        // } catch (int e) {
-        //     std::cout << "Error occurred: " << e << std::endl;
-        //     break;
-	    // }
-
-        
-        float pos[3] = {0, 16.5, -80*sqrt(2)};
-
-        test_leg->set_ee(pos);
-
-        //Get the new motor angles
-        float *new_motor = test_leg->get_motor_angles();
-
-	std::cout << "new_motor: " << new_motor[0] << " " << new_motor[1] << " " << new_motor[2] << std::endl;
-
-        // Test front right leg
-        current_target_position[0] = new_motor[0]*180/M_PI;
-        current_target_position[1] = new_motor[1]*180/M_PI;
-        current_target_position[2] = new_motor[2]*180/M_PI;
+        } catch (int e) {
+            std::cout << "Error occurred: " << e << std::endl;
+            break;
+	    }
 
         // Push the new array to the PRU
         send_to_pru(current_target_position);

@@ -30,6 +30,8 @@ class Robot {
 
         // Get the goal angles for the current pose
         float *get_goal_angles();
+
+        ~Robot();
     private:
         Leg *legs[4];
         float goal_angles[12]; // Motor angles
