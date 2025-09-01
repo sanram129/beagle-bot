@@ -92,52 +92,65 @@ int main(int, char**){
 	    Button 7 = Right bumper
 	*/
 
-        // Read the input from joy
-        try {
-            // Store the potential new end effector position
-            float delta = 0.0;
+        // // Read the input from joy
+        // try {
+        //     // Store the potential new end effector position
+        //     float delta = 0.0;
 
-            int leg_axis = -1;
+        //     int leg_axis = -1;
 
-	    read(joy, &ev, sizeof(ev));
-            switch((int)ev.type) {
-                case JS_EVENT_BUTTON:
-                    break;
-                case JS_EVENT_AXIS:
-                    if ((int)ev.number == 1) { // x
-                        delta = (int)ev.value * 2.0 / 32767.0;
-                        leg_axis = 0;
-                    } else if ((int)ev.number == 0) {// y
-                        delta = (int)ev.value * 2.0 / 32767.0;
-                        leg_axis = 1;
-                    } else if ((int)ev.number == 3) { // z
-                        delta = (int)ev.value * 2.0 / 32767.0;
-                        leg_axis = 2;
-		    }
-                    break;
-                default:
-                    break;
-            }
+	    // read(joy, &ev, sizeof(ev));
+        //     switch((int)ev.type) {
+        //         case JS_EVENT_BUTTON:
+        //             break;
+        //         case JS_EVENT_AXIS:
+        //             if ((int)ev.number == 1) { // x
+        //                 delta = (int)ev.value * 2.0 / 32767.0;
+        //                 leg_axis = 0;
+        //             } else if ((int)ev.number == 0) {// y
+        //                 delta = (int)ev.value * 2.0 / 32767.0;
+        //                 leg_axis = 1;
+        //             } else if ((int)ev.number == 3) { // z
+        //                 delta = (int)ev.value * 2.0 / 32767.0;
+        //                 leg_axis = 2;
+		//     }
+        //             break;
+        //         default:
+        //             break;
+        //     }
 
-            if (leg_axis != -1) {
-                // Do IK on the new leg
-                test_leg->leg_test(leg_axis, delta);
+        //     if (leg_axis != -1) {
+        //         // Do IK on the new leg
+        //         test_leg->leg_test(leg_axis, delta);
 
-                // Get the new motor angles
-                float *new_motor = test_leg->get_motor_angles();
+        //         // Get the new motor angles
+        //         float *new_motor = test_leg->get_motor_angles();
 
-                // Test front right leg
-                current_target_position[6] = new_motor[0]*180/M_PI;
-                current_target_position[7] = new_motor[1]*180/M_PI;
-                current_target_position[8] = new_motor[2]*180/M_PI;
+        //         // Test front right leg
+        //         current_target_position[6] = new_motor[0]*180/M_PI;
+        //         current_target_position[7] = new_motor[1]*180/M_PI;
+        //         current_target_position[8] = new_motor[2]*180/M_PI;
 
-                free(new_motor);
-            }
+        //         free(new_motor);
+        //     }
 
-        } catch (int e) {
-            std::cout << "Error occurred: " << e << std::endl;
-            break;
-	}
+        // } catch (int e) {
+        //     std::cout << "Error occurred: " << e << std::endl;
+        //     break;
+	    // }
+
+        
+        float pos[3] = {0.0, 16.5, (float)80*sqrt(2)};
+
+        test_leg->set_ee(pos);
+
+        //Get the new motor angles
+        float *new_motor = test_leg->get_motor_angles();
+
+        // Test front right leg
+        current_target_position[6] = new_motor[0]*180/M_PI;
+        current_target_position[7] = new_motor[1]*180/M_PI;
+        current_target_position[8] = new_motor[2]*180/M_PI;
 
         // Push the new array to the PRU
         send_to_pru(current_target_position);
