@@ -9,13 +9,6 @@
 #define LEG_LINK_2_LEN 80.0
 #define LEG_LINK_3_LEN 80.0
 
-enum leg_locations {
-    FRONT_LEFT = 0,
-    BACK_LEFT,
-    FRONT_RIGHT,
-    BACK_RIGHT
-};
-
 enum axes {
     X_AXIS = 0,
     Y_AXIS,

@@ -1,8 +1,6 @@
 #include <iostream>
 #include <stdint.h>
 #include <linux/joystick.h>
-#include <thread>
-#include <vector>
 #include <cstdlib>
 
 #include "motor_utils.h"
@@ -11,28 +9,26 @@
 // TODO: test a single leg with IK
 Leg *test_leg;
 
-// Create variables
+// Stores the pru array of cycles
 uint32_t *pru_mem;
 
-// Keep all the most recent target positions in a vector as a queue
-std::vector<float *> goal_deg_queue;
+// Keep the current target position in an array
+float *current_target_position = new float[12];
 
 // Send the final cycles to the PRU
-void send_to_pru(std::vector<float *> motor_angles) {
-    // Do nothing if there are no packages to send
-    // The PRU will hold the current position
-    if (motor_angles.size() == 0)
-	return;
-
+void send_to_pru(float *motor_angles) {
+    // Send the cycle amounts to the PRU
     for (int i = 0; i < 12; i++) {
-        pru_mem[i] = degrees_to_cycles(motor_angles[0][i]);
+        pru_mem[i] = degrees_to_cycles(motor_angles[i]);
     }
-
-    // Remove the first cycle message
-    goal_deg_queue.erase(goal_deg_queue.begin());
 }
 
 int main(int, char**){
+    // Initialize target positions
+    for (int i = 0; i < 12; i++) {
+        current_target_position[i] = 0.0;
+    }
+
     // Get an instance of pru 1's memory
     pru_mem = get_pru1_array();
     if (pru_mem == nullptr) {
@@ -55,6 +51,9 @@ int main(int, char**){
     // Test leg initialization
     int pos_offsets[] = {-1, -1, 1};
     test_leg = new Leg(pos_offsets);
+
+    // Main loop is ready for input
+    std::cout << "Init complete." << std::endl;
 
     // Main loop for input and inverse kinematics/walk
     while (1) {
@@ -128,12 +127,9 @@ int main(int, char**){
                 float *new_motor = test_leg->get_motor_angles();
 
                 // Test front right leg
-                float new_msg[12] = {0.0, 0.0, 0.0, 
-                                    0.0, 0.0, 0.0, 
-                                    new_motor[0], new_motor[1], new_motor[2], 
-                                    0.0, 0.0, 0.0};
-
-                goal_deg_queue.push_back(new_msg);
+                current_target_position[6] = new_motor[0];
+                current_target_position[6] = new_motor[1];
+                current_target_position[6] = new_motor[2];
 
                 free(new_motor);
             }
@@ -142,6 +138,9 @@ int main(int, char**){
             std::cout << "Error occurred: " << e << std::endl;
             break;
 	    }
+
+        // Push the new array to the PRU
+        send_to_pru(current_target_position);
     }
 
     // Close the PRU's memory
