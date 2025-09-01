@@ -17,6 +17,10 @@ std::vector<float *> goal_deg_queue;
 
 // Send the final cycles to the PRU
 void send_to_pru(std::vector<float *> motor_angles) {
+    // Do nothing if there are no packages to send
+    if (motor_angles.size() == 0)
+	return;
+
     for (int i = 0; i < 12; i++) {
         pru_mem[i] = degrees_to_cycles(motor_angles[0][i]);
     }
@@ -41,23 +45,51 @@ int main(int, char**){
     }
 
     // Handle motor angle updates in the background while the main thread makes calculations
-    std::thread pru_sender(send_to_pru, goal_deg_queue);
+    //std::thread pru_sender(send_to_pru, goal_deg_queue);
 
     // Event handler for joystick
     struct js_event ev;
 
     // Main loop for input and inverse kinematics/walk
     while (1) {
+	/*
+	    JOYSTICK BINDINGS
+
+	    AXES
+
+	    Axis 0 = Left joystick
+		Left = -32767
+		Right = 32767
+
+	    Axis 1 = Left joystick
+		Down = 32767
+		Up = -32767
+
+	    Axis 2 = Right joystick
+		Left = -32767
+		Right = 32767
+
+	    Axis 3 = Right joystick
+		Down = 32767
+		Up = -32767
+
+	    BUTTONS
+
+	    Button 6 = Left bumper
+	    Button 7 = Right bumper
+	*/
+
         // Read the input from joy
         read(joy, &ev, sizeof(ev));
-        switch(ev.type) {
+        switch((int)ev.type) {
             case JS_EVENT_BUTTON:
-                std::cout << "Button event number: " << ev.number << std::endl;
-                std::cout << "Button event value: " << ev.value << std::endl;
+		std::cout << "Button pressed!" << std::endl;
+                std::cout << "Button event number: " << (int)ev.number << std::endl;
+                std::cout << "Button event value: " << (int)ev.value << std::endl;
                 break;
             case JS_EVENT_AXIS:
-                std::cout << "Axis event number: " << ev.number << std::endl;
-                std::cout << "Axis event value: " << ev.value << std::endl;
+		if ((int)ev.number == 3)
+			std::cout << (int)ev.value << std::endl;
                 break;
             default:
                 break;
@@ -68,7 +100,7 @@ int main(int, char**){
     close_pru1_mem(pru_mem);
 
     // Join the thread
-    pru_sender.join();
+    //pru_sender.join();
 
     return 0;
 }
