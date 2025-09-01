@@ -40,7 +40,7 @@ void Leg::set_ee(float *position) {
     // Clamp all the ee values
     position[0] = std::max((float)-160.0, std::min(position[0], (float)160.0));
     position[1] = std::max((float)-160.0, std::min(position[1], (float)160.0));
-    position[2] = std::max((float)-60.0, std::min(position[0], (float)-160.0));
+    position[2] = std::max((float)-50.0, std::min(position[0], (float)-160.0));
 
     float tmp_angles[3] = {0.0};
 
@@ -49,17 +49,22 @@ void Leg::set_ee(float *position) {
     tmp_angles[0] = acos(LEG_LINK_1_LEN/yz_dist) - acos(position[1]/yz_dist);
     //tmp_angles[0] = std::max((float)-M_PI/3, std::min(tmp_angles[0], (float)M_PI/3));
 
-    // Calculate the z coordinate of joint 2 to get distances
-    float joint_2 = LEG_LINK_1_LEN*sin(tmp_angles[0]);
-    float j2_ee_z = position[2] - joint_2;
+    // Calculate the coordinates of joint 2 to get distances
+    float joint_2[3] = {0.0, LEG_LINK_1_LEN*cos(tmp_angles[0]), LEG_LINK_1_LEN*sin(tmp_angles[0])};
+
+    // Various distances to be used in calculations
+    float j2_ee = sqrt(
+        pow(position[0] - joint_2[0], 2) +
+        pow(position[1] - joint_2[1], 2) +
+        pow(position[2] - joint_2[2], 2));
+
+    float j2_ee_z = sqrt(
+        pow(position[1] - joint_2[1], 2) +
+        pow(position[2] - joint_2[2], 2));
 
     // Get the remaining two angles now that they are coplanar with the end effector
-    double j2_ee = sqrt(pow(position[0], 2) + pow(j2_ee_z, 2));
-
-    std::cout << j2_ee << std::endl;
-
     tmp_angles[2] = acos((pow(LEG_LINK_2_LEN, 2) + pow(LEG_LINK_3_LEN, 2) - pow(j2_ee, 2))
-                        / 2.0*LEG_LINK_2_LEN*LEG_LINK_3_LEN);
+                        / (2.0*LEG_LINK_2_LEN*LEG_LINK_3_LEN));
 
     tmp_angles[1] = M_PI/4.0 + asin(LEG_LINK_3_LEN*sin(tmp_angles[2])/j2_ee) + acos(j2_ee_z/j2_ee);
 

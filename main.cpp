@@ -140,7 +140,7 @@ int main(int, char**){
 	    // }
 
         
-        float pos[3] = {0.0, 16.5, (float)80*sqrt(2)};
+        float pos[3] = {0.0, 16.5, -(float)80*sqrt(2)};
 
         test_leg->set_ee(pos);
 
@@ -148,9 +148,9 @@ int main(int, char**){
         float *new_motor = test_leg->get_motor_angles();
 
         // Test front right leg
-        current_target_position[6] = new_motor[0]*180/M_PI;
-        current_target_position[7] = new_motor[1]*180/M_PI;
-        current_target_position[8] = new_motor[2]*180/M_PI;
+        current_target_position[3] = new_motor[0]*180/M_PI;
+        current_target_position[4] = new_motor[1]*180/M_PI;
+        current_target_position[5] = new_motor[2]*180/M_PI;
 
         // Push the new array to the PRU
         send_to_pru(current_target_position);
