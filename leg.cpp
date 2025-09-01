@@ -4,7 +4,7 @@
 Leg::Leg(int* pos_offsets) {
     // Set IK angles
     this->ik_angles[0] = 0.0;
-    this->ik_angles[1] = 3*M_PI/4;
+    this->ik_angles[1] = M_PI/2;
     this->ik_angles[2] = M_PI/2;
 
     // Set default motor angles to 0
@@ -17,7 +17,7 @@ Leg::Leg(int* pos_offsets) {
     // Set end effector to its home position
     this->end_effector[0] = 0.0;
     this->end_effector[1] = 16.5;
-    this->end_effector[2] = sqrt(2)*80.0;
+    this->end_effector[2] = -sqrt(2)*80.0;
 }
 
 float *Leg::ik_to_motor(float *ik_angles) {
@@ -28,43 +28,40 @@ float *Leg::ik_to_motor(float *ik_angles) {
 
     // Take away offsets and multiply by the remainder
     for (int i = 0; i < 3; i++) {
-        new_motor_angles[i] = ik_angles[i];
+        new_motor_angles[i] = this->ik_angles[i];
         new_motor_angles[i] -= rad_offsets[i];
-        new_motor_angles[i] *= pos_offsets[i]; 
+        new_motor_angles[i] *= this->pos_offsets[i]; 
     }
 
     return new_motor_angles;
 }
 
 void Leg::set_ee(float *position) {
-    // Make sure we have 3 positions
-    int pos_space = sizeof(position) / sizeof(position[0]);
-    if (pos_space != 3) {
-        std::cout << "Not enough position arguments!" << std::endl;
-        return;
-    }
+    // Clamp all the ee values
+    position[0] = std::max((float)-160.0, std::min(position[0], (float)160.0));
+    position[1] = std::max((float)-160.0, std::min(position[1], (float)160.0));
+    position[2] = std::max((float)-60.0, std::min(position[0], (float)-160.0));
 
     float tmp_angles[3] = {0.0};
 
     // Get the angle made by the first motor and make sure it is valid
     double yz_dist = sqrt(pow(position[1], 2) + pow(position[2], 2));
     tmp_angles[0] = acos(LEG_LINK_1_LEN/yz_dist) - acos(position[1]/yz_dist);
-    if (tmp_angles[0] > M_PI/2 || tmp_angles[0] < -M_PI/2) {
-        std::cout << "Invalid end effector position!" << std::endl;
-        return;
-    }
+    //tmp_angles[0] = std::max((float)-M_PI/3, std::min(tmp_angles[0], (float)M_PI/3));
 
     // Calculate the z coordinate of joint 2 to get distances
     float joint_2 = LEG_LINK_1_LEN*sin(tmp_angles[0]);
     float j2_ee_z = position[2] - joint_2;
 
     // Get the remaining two angles now that they are coplanar with the end effector
-    double j2_ee = sqrt(pow((position[0]), 2) + pow(j2_ee_z, 2));
-    
-    tmp_angles[2] = acos((pow(LEG_LINK_2_LEN, 2) + pow(LEG_LINK_3_LEN, 2) - pow(j2_ee, 2))
-                        / 2*LEG_LINK_2_LEN*LEG_LINK_3_LEN);
+    double j2_ee = sqrt(pow(position[0], 2) + pow(j2_ee_z, 2));
 
-    tmp_angles[1] = M_PI/4 + asin(LEG_LINK_3_LEN*sin(tmp_angles[2])/j2_ee) + acos(j2_ee_z/j2_ee);
+    std::cout << j2_ee << std::endl;
+
+    tmp_angles[2] = acos((pow(LEG_LINK_2_LEN, 2) + pow(LEG_LINK_3_LEN, 2) - pow(j2_ee, 2))
+                        / 2.0*LEG_LINK_2_LEN*LEG_LINK_3_LEN);
+
+    tmp_angles[1] = M_PI/4.0 + asin(LEG_LINK_3_LEN*sin(tmp_angles[2])/j2_ee) + acos(j2_ee_z/j2_ee);
 
     if (tmp_angles[1] > M_PI || tmp_angles[1] < 0) {
         std::cout << "Invalid end effector position!" << std::endl;
@@ -125,4 +122,8 @@ void Leg::leg_test(int axis, float delta) {
     // Update based on desired axis
     new_pos[axis] += delta;
     this->set_ee(new_pos);
+}
+
+Leg::~Leg() {
+    free(this->pos_offsets);
 }

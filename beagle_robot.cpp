@@ -10,7 +10,11 @@ Robot::Robot() {
     };
 
     for (int i = 0; i < 4; i++) {
-        this->legs[i] = Leg(offsets[i]);
+	int *leg_offset = new int[3];
+	for (int j = 0; j < 3; j++) {
+	    leg_offset[j] = offsets[i][j];
+	}
+        this->legs[i] = new Leg(leg_offset);
     }
 
     this->home_height = sqrt(2)*80.0;
@@ -28,9 +32,9 @@ void Robot::crouch(float delta) {
 
     // Get the new motor angles for each of the legs and change the array
     for (int i = 0; i < 4; i++) {
-        float *old_ee = this->legs[i].get_ee();
+        float *old_ee = this->legs[i]->get_ee();
         old_ee[2] += delta; 
-        this->legs[i].set_ee(old_ee);
+        this->legs[i]->set_ee(old_ee);
         free(old_ee);
     }
 

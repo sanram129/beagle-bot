@@ -35,6 +35,8 @@ class Leg {
         // Move the leg along an axis
         void leg_test(int axis, float delta);
 
+	~Leg();
+
     private:
         float ik_angles[3];
         float motor_angles[3];

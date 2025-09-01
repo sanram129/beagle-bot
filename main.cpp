@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <linux/joystick.h>
 #include <cstdlib>
+#include <cmath>
 
 #include "motor_utils.h"
 #include "leg.h"
@@ -17,6 +18,8 @@ float *current_target_position = new float[12];
 
 // Send the final cycles to the PRU
 void send_to_pru(float *motor_angles) {
+    std::cout << "Target positions are: " << current_target_position[6]
+	<< " " << current_target_position[7] << " " << current_target_position[8] << std::endl;
     // Send the cycle amounts to the PRU
     for (int i = 0; i < 12; i++) {
         pru_mem[i] = degrees_to_cycles(motor_angles[i]);
@@ -41,9 +44,6 @@ int main(int, char**){
         std::cout << "Joystick not opened!!!" << std::endl;
         return 1;
     }
-
-    // Handle motor angle updates in the background while the main thread makes calculations
-    std::thread pru_sender(send_to_pru, goal_deg_queue);
 
     // Event handler for joystick
     struct js_event ev;
@@ -99,19 +99,19 @@ int main(int, char**){
 
             int leg_axis = -1;
 
-	        read(joy, &ev, sizeof(ev));
+	    read(joy, &ev, sizeof(ev));
             switch((int)ev.type) {
                 case JS_EVENT_BUTTON:
                     break;
                 case JS_EVENT_AXIS:
                     if ((int)ev.number == 1) { // x
-                        delta = (int)ev.value * 10.0 / 32767.0;
+                        delta = (int)ev.value * 2.0 / 32767.0;
                         leg_axis = 0;
                     } else if ((int)ev.number == 0) {// y
-                        delta = (int)ev.value * 10.0 / 32767.0;
+                        delta = (int)ev.value * 2.0 / 32767.0;
                         leg_axis = 1;
                     } else if ((int)ev.number == 3) { // z
-                        delta = (int)ev.value * 10.0 / 32767.0;
+                        delta = (int)ev.value * 2.0 / 32767.0;
                         leg_axis = 2;
 		    }
                     break;
@@ -127,9 +127,9 @@ int main(int, char**){
                 float *new_motor = test_leg->get_motor_angles();
 
                 // Test front right leg
-                current_target_position[6] = new_motor[0];
-                current_target_position[6] = new_motor[1];
-                current_target_position[6] = new_motor[2];
+                current_target_position[6] = new_motor[0]*180/M_PI;
+                current_target_position[7] = new_motor[1]*180/M_PI;
+                current_target_position[8] = new_motor[2]*180/M_PI;
 
                 free(new_motor);
             }
@@ -137,7 +137,7 @@ int main(int, char**){
         } catch (int e) {
             std::cout << "Error occurred: " << e << std::endl;
             break;
-	    }
+	}
 
         // Push the new array to the PRU
         send_to_pru(current_target_position);
@@ -145,9 +145,6 @@ int main(int, char**){
 
     // Close the PRU's memory
     close_pru1_mem(pru_mem);
-
-    // Join the thread
-    pru_sender.join();
 
     return 0;
 }
