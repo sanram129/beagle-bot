@@ -105,15 +105,16 @@ int main(int, char**){
                 case JS_EVENT_BUTTON:
                     break;
                 case JS_EVENT_AXIS:
-                    if ((int)ev.number == 1) // x
+                    if ((int)ev.number == 1) { // x
                         delta = (int)ev.value * 10.0 / 32767.0;
                         leg_axis = 0;
-                    else if ((int)ev.number == 0) // y
+                    } else if ((int)ev.number == 0) {// y
                         delta = (int)ev.value * 10.0 / 32767.0;
                         leg_axis = 1;
-                    else if ((int)ev.number == 3) // z
+                    } else if ((int)ev.number == 3) { // z
                         delta = (int)ev.value * 10.0 / 32767.0;
                         leg_axis = 2;
+		    }
                     break;
                 default:
                     break;
@@ -121,16 +122,16 @@ int main(int, char**){
 
             if (leg_axis != -1) {
                 // Do IK on the new leg
-                test_leg->leg_test(leg_axis, new_ee_pos);
+                test_leg->leg_test(leg_axis, delta);
 
                 // Get the new motor angles
-                float *new_motor = test_leg->get_motor_angles()
+                float *new_motor = test_leg->get_motor_angles();
 
                 // Test front right leg
-                float new_msg[12] = [0.0, 0.0, 0.0, 
+                float new_msg[12] = {0.0, 0.0, 0.0, 
                                     0.0, 0.0, 0.0, 
                                     new_motor[0], new_motor[1], new_motor[2], 
-                                    0.0, 0.0, 0.0];
+                                    0.0, 0.0, 0.0};
 
                 goal_deg_queue.push_back(new_msg);
 

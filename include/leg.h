@@ -32,7 +32,7 @@ class Leg {
         // Setter and getter for end effector
         void set_ee(float *position);
         float *get_ee();
-        
+
         // Getter for angles
         float *get_ik_angles();
 
@@ -40,7 +40,7 @@ class Leg {
         float *get_motor_angles();
 
         // Move the leg along an axis
-        float *leg_test(int axis, float delta);
+        void leg_test(int axis, float delta);
 
     private:
         float ik_angles[3];
