@@ -138,10 +138,15 @@ int main(int, char**){
             // Change height and crouch first
             // Right trigger goes up, left goes down
             if (axes[2][0] != 0 || axes[2][1] != 0) {
-		height_delta = (axes[2][1] - axes[2][0])/3276700.0/2;
-		beagle_bot->crouch(height_delta);
+		        height_delta = (axes[2][1] - axes[2][0])/3276700.0/2;
+		        beagle_bot->crouch(height_delta);
             } else {
+                // Get dx and dy in range of -1 to 1
+                float dx = axes[0][0]/32767.0;
+                float dy = axes[0][1]/32767.0;
+
                 // Walk if we don't want to crouch
+                beagle_bot->walk(dx, dy);
             }
 		
             // Update target
@@ -149,6 +154,8 @@ int main(int, char**){
             for (int i = 0; i < 12; i++) {
                 current_target_position[i] = temp_target[i]*180.0/(float)M_PI;
             }
+
+            free(temp_target);
 
         } catch (int e) {
             std::cout << "Error occurred: " << e << std::endl;

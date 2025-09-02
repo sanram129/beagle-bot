@@ -25,7 +25,10 @@ class Robot {
         // Make the new standing height of the robot a certain value and hold it
         void crouch(float delta);
 
-        // Make the robot walk forward and return the desired pose
+        // Put the robot's legs in the current pose
+        void stride(float normal_dx, float normal_dy, float dist);
+
+        // Make the robot walk
         void walk(float dx, float dy);
 
         // Get the goal angles for the current pose
