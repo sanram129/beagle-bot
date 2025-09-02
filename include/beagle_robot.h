@@ -1,5 +1,7 @@
 #include <cmath>
 #include <cstdlib>
+#include <chrono>
+#include <thread>
 
 #include "leg.h"
 

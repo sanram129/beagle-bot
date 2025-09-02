@@ -146,8 +146,10 @@ int main(int, char**){
                 float dy = axes[0][1]/32767.0;
 
                 // Walk if we don't want to crouch
-                beagle_bot->walk(dx, dy);
-            }
+                if (dx != 0 || dy != 0) {
+			beagle_bot->walk(dx, dy);
+            	}
+	    }
 		
             // Update target
             float *temp_target = beagle_bot->get_goal_angles();

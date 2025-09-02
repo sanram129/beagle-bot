@@ -171,7 +171,8 @@ void Robot::walk(float dx, float dy) {
     }
 
     // Take a stride and compute the angles
-    this->stride(dx, dy, 10);
+    this->stride(dx, dy, 25);
+    std::this_thread::sleep_for(std::chrono::milliseconds(250));
 }
 
 float *Robot::get_goal_angles() {
