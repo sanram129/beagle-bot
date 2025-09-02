@@ -8,6 +8,9 @@ add_executable(beagle-bot
                 beagle_robot.cpp)
 target_include_directories(beagle-bot PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
+find_package(Threads REQUIRED)
+target_link_libraries(beagle-bot PRIVATE Threads::Threads)
+
 include(CTest)
 enable_testing()
 

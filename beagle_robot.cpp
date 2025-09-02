@@ -4,8 +4,8 @@ Robot::Robot() {
     // The offsets required to align all axes
     int offsets[4][3] = {
         {1, 1, -1},
-        {-1, 1, -1},
-        {-1, -1, 1},
+        {-1, -1, 1}, // was -1 1 -1
+        {-1, 1, -1}, // was -1 -1 1
         {1, -1, 1}
     };
 
@@ -28,20 +28,22 @@ void Robot::crouch(float delta) {
         return;
 
     // Change home height (-ve for taller, +ve for shorter)
-    this->home_height += delta;
+    if (this->home_height <= -60.0 && this->home_height >= -150.0)
+	this->home_height += delta;
+    else
+	this->home_height = (float)std::min(-60.0, std::max((double)this->home_height, -150.0));
 
     // Get the new motor angles for each of the legs and change the array
     for (int i = 0; i < 4; i++) {
         float *old_ee = this->legs[i]->get_ee();
-        old_ee[2] += delta; 
+	old_ee[2] = this->home_height; 
         this->legs[i]->set_ee(old_ee);
-        free(old_ee);
     }
 
     // Update goal angles!
     for (int i = 0; i < 4; i++) {
-        float *tmp_motor_angles = this->legs[i]->get_ee();
-        
+        float *tmp_motor_angles = this->legs[i]->get_motor_angles();
+
         for (int j = 0; j < 3; j++) {
             this->goal_angles[3*i + j] = tmp_motor_angles[j];
         }

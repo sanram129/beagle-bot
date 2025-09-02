@@ -92,6 +92,7 @@ void Leg::set_ee(float *position) {
         this->end_effector[i] = position[i];
     }
 
+    free(position);
     free(new_motor_angles);
 }
 
